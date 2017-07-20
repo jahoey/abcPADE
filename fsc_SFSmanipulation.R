@@ -7,9 +7,8 @@ setwd("~/22_Amarel") # This needs to be the directory where the Amarel SFS files
 file_list <- list.files(".", recursive = TRUE, pattern = ".obs$") # should contain 200 file names, but picks up the observed SFS too
 file_list <- file_list[-201]
 
-file_list <- file_list[1:10]
-
-file_list <- split(file_list, ceiling(seq_along(file_list)/20)) # creates a list of lists with 10 SFS in each
+# file_list <- file_list[1:20]
+file_list <- split(file_list, ceiling(seq_along(file_list)/2)) # creates a list of lists with 10 SFS in each
 
 #### Read in this file so I can easily get column and row names ####
 # setwd("~/Documents/Graduate School/Rutgers/Summer Flounder/Analysis/ABC-adults/DNA/DNA_1millionby100")
@@ -56,11 +55,14 @@ for(i in 1:length(file_list)){
     # The number of columns is inferred; can be set explicitly for clarity, if known
     data_read[[j]] <- matrix(unlist(data_read[[j]]), nrow=good_lines)
   }
-  full_read <- append(full_read, data_read)
+  full_read <- append(full_read, data_read) # should be 100000 x 52845
 }
 
-save(full_read, file = "~/Documents/Graduate School/Rutgers/Summer Flounder/Analysis/ABC-adults/SFS/22_Amarel_output/full_read_subset1.RData")
-load(file = "/Users/jenniferhoey/Documents/Graduate School/Rutgers/Summer Flounder/Analysis/ABC-adults/SFS/22_Amarel_output/full_read_subset1.RData")
+# save(full_read, file = "~/Documents/Graduate School/Rutgers/Summer Flounder/Analysis/ABC-adults/SFS/22_Amarel_output/full_read_subset1.RData")
+# load(file = "/Users/jenniferhoey/Documents/Graduate School/Rutgers/Summer Flounder/Analysis/ABC-adults/SFS/22_Amarel_output/full_read_subset1.RData")
+
+save(full_read, file = "~/22_Amarel/full_read.RData") # saving and loading will make it faster to read in the second time
+load(file = "~/22_Amarel/full_read.RData")
 
 # Format to array
 data_array <- simplify2array(full_read) #dim should be 195 x 271 x 100000
@@ -68,6 +70,10 @@ data_array <- simplify2array(full_read) #dim should be 195 x 271 x 100000
 # Name the columns and rows
 colnames(data_array) <- colnames(sfs)
 rownames(data_array) <- rownames(sfs)
+
+# Save the data array so that I can load it quickly
+save(data_array, file = "~/22_Amarel/data_array.RData")
+load(file = "~/22_Amarel/data_array.RData")
 
 #### Removing rare SNPs with MAF < 0.05 ####
 # First create a complete theoretical SFS with the MAF counts across populations
@@ -82,12 +88,27 @@ for (i in 1:ncol(count.matrix)){
 }
 
 # Duplicate the count matirx into an array matching the dimensions of the simulatlions
-# num_sims <- 10
-
-# count.array <- array(rep(count.matrix, n_matrices), c(195,271,10))
 count.array <- array(rep(count.matrix, n_matrices*length(file_list)), c(195,271,n_matrices*length(file_list)))
 rownames(count.array) <- rownames(sfs)
 colnames(count.array) <- colnames(sfs)
+
+# Save the count array as an R object
+save(count.array, file = "~/22_Amarel/count.array.RData")
+load(file = "~/22_Amarel/count.array.RData")
+
+#### Now I have the a data array of observed SFSs and  theoretical SNP counts(195 x 271 x 100000) ####
+load(file = "~/22_Amarel/data_array.RData")
+load(file = "~/22_Amarel/count.array.RData")
+
+n_matrices <- 25000
+
+# Divide the simulations so that R can deal with their size
+data_array <- data_array[,,1:25000]
+data_array <- data_array[,,25001:50000]
+data_array <- data_array[,,50001:75000]
+data_array <- data_array[,,75001:100000]
+
+count.array <- count.array[,,1:25000]
 
 # Replace across population counts with zero based on where there are zeros in the simulated SFS matrix
 count.array[which(data_array == 0)] <- 0
@@ -202,6 +223,18 @@ for(i in 1:n_matrices){
   
   sub.sfs.all <- rbind(sub.sfs.all, sub.dat)
 }
+
+# Save each simulation chunk as a R datatype
+sub.sfs.all1 <- sub.sfs.all
+save(sub.sfs.all1, file = "~/22_Amarel/sub.sfs.all1.RData")
+sub.sfs.all2 <- sub.sfs.all
+save(sub.sfs.all2, file = "~/22_Amarel/sub.sfs.all2.RData")
+sub.sfs.all3 <- sub.sfs.all
+save(sub.sfs.all3, file = "~/22_Amarel/sub.sfs.all3.RData")
+sub.sfs.all4 <- sub.sfs.all
+save(sub.sfs.all4, file = "~/22_Amarel/sub.sfs.all4.RData")
+
+sub.sfs.all <- rbind(sub.sfs.all1, sub.sfs.all2, sub.sfs.all3, sub.sfs.all4)
 
 # colnames(sub.sfs.all) <- colnames(sfs) # Name the columns and rows if in matrix form
 # rownames(sub.sfs.all) <- rep(rownames(sfs), 10) #PROBLEM because rownames are the same
