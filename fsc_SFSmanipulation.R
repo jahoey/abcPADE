@@ -100,15 +100,22 @@ load(file = "~/22_Amarel/count.array.RData")
 load(file = "~/22_Amarel/data_array.RData")
 load(file = "~/22_Amarel/count.array.RData")
 
-n_matrices <- 25000
+n_matrices <- 12500
 
 # Divide the simulations so that R can deal with their size
-data_array <- data_array[,,1:25000]
-data_array <- data_array[,,25001:50000]
-data_array <- data_array[,,50001:75000]
-data_array <- data_array[,,75001:100000]
+# data_array <- data_array[,,1:12500] # on screen -r 4161
+# data_array <- data_array[,,12501:25000] # on screen -r sfs1.2
 
-count.array <- count.array[,,1:25000]
+# data_array <- data_array[,,25001:50000] #done in 2 chunks
+
+# data_array <- data_array[,,50001:62500] # on screen -r sfs3.1
+# data_array <- data_array[,,62501:75000] # on screen -r sfs3.2
+
+data_array <- data_array[,,75001:87500]
+data_array <- data_array[,,87501:100000]
+
+# Set the dimensions of the count.array
+count.array <- count.array[,,1:12500]
 
 # Replace across population counts with zero based on where there are zeros in the simulated SFS matrix
 count.array[which(data_array == 0)] <- 0
@@ -206,8 +213,6 @@ for(i in 1:n_matrices){
   index.greaterthanone <- which(data_array[,,i] > 1) # indices of elements greater than 1
   adds <- vector()
   for(j in 1:length(index.greaterthanone)){
-    # adds <- vector()
-    # adds <- append(adds, (rep(index.greaterthanone[j], (data_array[,,i][index.greaterthanone][j])-1)))
     adds <- append(adds, (rep(index.greaterthanone[j], (data_array[,,i][index.greaterthanone][j])-1)))
   }
   full.nonzeros <- c(index.one, index.greaterthanone, adds)
@@ -225,16 +230,25 @@ for(i in 1:n_matrices){
 }
 
 # Save each simulation chunk as a R datatype
-sub.sfs.all1 <- sub.sfs.all
-save(sub.sfs.all1, file = "~/22_Amarel/sub.sfs.all1.RData")
-sub.sfs.all2 <- sub.sfs.all
-save(sub.sfs.all2, file = "~/22_Amarel/sub.sfs.all2.RData")
-sub.sfs.all3 <- sub.sfs.all
-save(sub.sfs.all3, file = "~/22_Amarel/sub.sfs.all3.RData")
-sub.sfs.all4 <- sub.sfs.all
-save(sub.sfs.all4, file = "~/22_Amarel/sub.sfs.all4.RData")
+# sub.sfs.all1.1 <- sub.sfs.all # running
+# save(sub.sfs.all1.1, file = "~/22_Amarel/sub.sfs.all1.1to12500.RData")
+# sub.sfs.all1.2 <- sub.sfs.all # running
+# save(sub.sfs.all1.2, file = "~/22_Amarel/sub.sfs.all1.12501to25000.RData")
 
-sub.sfs.all <- rbind(sub.sfs.all1, sub.sfs.all2, sub.sfs.all3, sub.sfs.all4)
+# sub.sfs.all2 <- sub.sfs.all # done
+# save(sub.sfs.all2, file = "~/22_Amarel/sub.sfs.all2.1to14267.RData")
+# save(sub.sfs.all, file = "~/22_Amarel/sub.sfs.all2.14260to25000.RData")
+
+# sub.sfs.all3.1 <- sub.sfs.all
+# save(sub.sfs.all3.1, file = "~/22_Amarel/sub.sfs.all3.1to12500.RData")
+# sub.sfs.all3.2 <- sub.sfs.all
+# save(sub.sfs.all3.2, file = "~/22_Amarel/sub.sfs.all3.12501to25000.RData")
+
+sub.sfs.all4.1 <- sub.sfs.all
+save(sub.sfs.all4.1, file = "~/22_Amarel/sub.sfs.all4.1to12500.RData")
+sub.sfs.all4.2 <- sub.sfs.all
+save(sub.sfs.all4.2, file = "~/22_Amarel/sub.sfs.all4.12501to25000.RData")
+
 
 # colnames(sub.sfs.all) <- colnames(sfs) # Name the columns and rows if in matrix form
 # rownames(sub.sfs.all) <- rep(rownames(sfs), 10) #PROBLEM because rownames are the same
@@ -329,6 +343,11 @@ image(1, ColorLevels,
 library(abc)
 # setwd("~/Documents/Graduate School/Rutgers/Summer Flounder/Analysis/Migrate-adults/Arlequin")
 setwd("~/22_Amarel")
+
+# Read in the chunks of manipulated SFSs
+load(file = "~/22_Amarel/sub.sfs.all2.1to14267.RData") # sub.sfs.all2
+load(file = "~/22_Amarel/sub.sfs.all2.14260to25000.RData") # sub.sfs.all
+
 obs <- read.table("PADEadults_zeros_jointMAFpop1_0.obs", skip = 1, header = TRUE)
 obs.sumstats <- as.vector(t(obs)) # Converts SFS from data.frame to a vector by rows so that it can be compared to the simulated SFS
 
