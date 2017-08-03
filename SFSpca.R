@@ -20,9 +20,14 @@ sfs_pca$x # scores, 10000 x 10000
 print(sfs_pca)
 summary(sfs_pca)
 
+# Plot variance vs PC
+pdf('sfs_pca_summary.pdf')
+plot(sfs_pca, type = "l")
+
 # To get values proportional to eigenvalues
 ev <- sfs_pca$sdev^2
 ev.varprop <- ev/sum(ev)
+ev.varprop[1:25]
 
 # Plotting PCA
 plot(sfs_pca$x)
@@ -71,5 +76,100 @@ length(obs_proj) # should be 1 x 10000
 calcs.pca <- abc(target = obs_proj, param = params, sumstat = full_sfs_pc, tol = 0.005, method = 'rejection')
 
 # Loclinear ABC
-calcs.pca.loclinear <- abc(target = obs_proj, param = params, sumstat = full_sfs_pc, tol = 0.005, method = 'loclinear',
+calcs.pca.loclinear <- abc(target = obs_proj[,1:25], param = params, sumstat = full_sfs_pc[,1:25], tol = 0.005, method = 'loclinear',
                            transf = c('log', 'log', 'logit'), logit.bounds = matrix(c(NA, NA, NA, NA, 0, 0.5), ncol = 2, byrow = TRUE))
+
+#### Visualizing rejection ABC posteriors ####
+save(calcs.pca, file = "~/22_Amarel/calcs.pca0.005.RData")
+save(calcs.pca.loclinear, file = "~/22_Amarel/calcs.pca.loclinear0.005.RData")
+
+# Rejection ABC
+# Looking at priors and posteriors on my computer for ABC done on reduced dimension SFS using rejection method
+setwd("~/Documents/Graduate School/Rutgers/Summer Flounder/Analysis/ABC-adults/SFS/PCA")
+load(file = "~/Documents/Graduate School/Rutgers/Summer Flounder/Analysis/ABC-adults/SFS/PCA/calcs.pca0.005.RData") # calcs.pca
+
+plot(density(log10(calcs.pca$unadj.values[,1])), col='red', xlab = 'log10(POPONE)', main = '')
+plot(density(log10(calcs.pca$unadj.values[,2])), col='red', xlab = 'log10(POPTWO)', main = '')
+plot(density(calcs.pca$unadj.values[,3]), col='red', xlab = 'DISP', main = '')
+
+# Plot priors and posteriors
+library(KScorrect)
+
+pdf('abc_calcs_pca_tol0.005.pdf')
+popone <- rlunif(10000, 100, 100000) # exp(10) doesn't seem to make a difference
+popone_range <- range(popone)
+plot(density(log10(popone), from = log10(popone_range[1]), to = log10(popone_range[2])), ylim = c(0,0.7), xlab = 'log10(POPONE)', main = '')
+lines(density(log10(calcs.pca$unadj.values[,1]), from = log10(popone_range[1]), to = log10(popone_range[2])), col='blue')
+
+poptwo <- rlunif(10000, 100, 100000)
+poptwo_range <- range(poptwo)
+plot(density(log10(poptwo), from = log10(poptwo_range[1]), to = log10(poptwo_range[2])), ylim = c(0,0.7), xlab = 'log10(POPTWO)', main = '')
+lines(density(log10(calcs.pca$unadj.values[,2]), from = log10(poptwo_range[1]), to = log10(poptwo_range[2])), col='blue')
+
+disp <- runif(10000, 0, 0.5)
+disp_range <- range(disp)
+plot(density(disp, from = disp_range[1], to = disp_range[2]), ylim = c(0, 4), xlab = 'DISP', main = '')
+lines(density(calcs.pca$unadj.values[,3], from = disp_range[1], to = disp_range[2]), col='red')
+dev.off()
+
+# Correlations between parameters
+pdf('POPvDISP_correlatlions_pca.pdf')
+plot(log10(calcs.pca$unadj.values[,1]) ~ log10(calcs.pca$unadj.values[,2]), xlab = 'log10(POPTWO)', ylab = 'log10(POPONE)', col = rgb(0,0,0,0.7))
+plot(calcs.pca$unadj.values[,3] ~ log10(calcs.pca$unadj.values[,1]), xlab = 'log10(POPONE)', ylab = 'DISP')
+lm1 <- lm(calcs.pca$unadj.values[,3] ~ log10(calcs.pca$unadj.values[,1]))
+abline(lm1, col = 'tomato')
+
+plot(calcs.pca$unadj.values[,3] ~ log10(calcs.pca$unadj.values[,2]), xlab = 'log10(POPTWO)', ylab = 'DISP')
+lm2 <- lm(calcs.pca$unadj.values[,3] ~ log10(calcs.pca$unadj.values[,2]))
+abline(lm2, col = 'tomato')
+dev.off()
+
+# Loclinear ABC
+# Looking at priors and posteriors on my computer for ABC done on reduced dimension SFS using loclinear method
+setwd("~/Documents/Graduate School/Rutgers/Summer Flounder/Analysis/ABC-adults/SFS/PCA")
+load(file = "~/Documents/Graduate School/Rutgers/Summer Flounder/Analysis/ABC-adults/SFS/PCA/calcs.pca.loclinear0.005.RData") # calcs.pca.loclinear
+
+plot(density(log10(calcs.pca.loclinear$unadj.values[,1])), col='red', xlab = 'log10(POPONE)', main = '', ylim = c(0, 1))
+lines(density(log10(calcs.pca.loclinear$adj.values[,1])))
+plot(density(log10(calcs.pca.loclinear$unadj.values[,2])), col='red', xlab = 'log10(POPTWO)', main = '', ylim = c(0, 1))
+lines(density(log10(calcs.pca.loclinear$adj.values[,2])))
+plot(density(calcs.pca.loclinear$unadj.values[,3]), col='red', xlab = 'DISP', main = '')
+lines(density(calcs.pca.loclinear$adj.values[,3]))
+
+# Plot priors and posteriors
+library(KScorrect)
+
+pdf('abc_calcs_pcaloclinear_tol0.005.pdf')
+popone <- rlunif(1000, 100, 100000)
+popone_range <- range(popone)
+plot(density(log10(popone), from = log10(popone_range[1]), to = log10(popone_range[2])), ylim = c(0,0.7), xlab = 'log10(POPONE)', main = '')
+lines(density(log10(calcs.pca.loclinear$unadj.values[,1]), from = log10(popone_range[1]), to = log10(popone_range[2])), col='blue')
+lines(density(log10(calcs.pca.loclinear$adj.values[,1]), from = log10(popone_range[1]), to = log10(popone_range[2])), col='red')
+
+poptwo <- rlunif(1000, 100, 100000)
+poptwo_range <- range(poptwo)
+plot(density(log10(poptwo), from = log10(poptwo_range[1]), to = log10(poptwo_range[2])), ylim = c(0,1), xlab = 'log10(POPTWO)', main = '')
+lines(density(log10(calcs.pca.loclinear$unadj.values[,2]), from = log10(poptwo_range[1]), to = log10(poptwo_range[2])), col='blue')
+lines(density(log10(calcs.pca.loclinear$adj.values[,2]), from = log10(poptwo_range[1]), to = log10(poptwo_range[2])), col='red')
+
+disp <- runif(1000, 0, 0.5)
+disp_range <- range(disp)
+plot(density(disp, from = disp_range[1], to = disp_range[2]), ylim = c(0, 4), xlab = 'DISP', main = '')
+lines(density(calcs.pca.loclinear$unadj.values[,3], from = disp_range[1], to = disp_range[2]), col='blue')
+lines(density(calcs.pca.loclinear$adj.values[,3], from = disp_range[1], to = disp_range[2]), col='red')
+dev.off()
+
+# Correlations between parameters
+pdf('POPvDISP_correlatlions_pca.pdf')
+plot(log10(calcs.pca.loclinear$unadj.values[,1]) ~ log10(calcs.pca.loclinear$unadj.values[,2]), xlab = 'log10(POPTWO)', ylab = 'log10(POPONE)', col = rgb(0,0,0,0.7))
+plot(calcs.pca.loclinear$unadj.values[,3] ~ log10(calcs.pca.loclinear$unadj.values[,1]), xlab = 'log10(POPONE)', ylab = 'DISP')
+lm1 <- lm(calcs.pca.loclinear$unadj.values[,3] ~ log10(calcs.pca.loclinear$unadj.values[,1]))
+abline(lm1, col = 'tomato')
+
+plot(calcs.pca.loclinear$unadj.values[,3] ~ log10(calcs.pca.loclinear$unadj.values[,2]), xlab = 'log10(POPTWO)', ylab = 'DISP')
+lm2 <- lm(calcs.pca.loclinear$unadj.values[,3] ~ log10(calcs.pca.loclinear$unadj.values[,2]))
+abline(lm2, col = 'tomato')
+dev.off()
+
+
+
