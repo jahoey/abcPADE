@@ -1,0 +1,13 @@
+// Priors and rules file 
+// *********************
+
+[PARAMETERS]
+//#isInt?	#name	#dist.	#min	#max
+//all N are in number of haploid individuals
+1 POPONE logunif 100 100000 output
+1 POPTWO logunif 100 100000 output
+0 DISP unif 0 0.5 output
+[RULES]
+
+[COMPLEX PARAMETERS]
+
