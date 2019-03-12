@@ -1,5 +1,5 @@
 # abcPADE
-Scripts for reading in & manipulating fastsimcoal2 output for ABC
+Scripts for reading in & manipulating fastsimcoal2 output for ABC. A guide to performing ABC can be found [here]
 
 - **migrationABC_5729_2_0.5dispersal.est** & **migrationABC_DNA1millionby100.tpl** are the input files for generating simulations with fastsimcoal
 - **readparams.R** script reads in many parameter files from a single directory and appends them to each other
